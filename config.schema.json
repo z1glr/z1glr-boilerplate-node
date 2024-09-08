@@ -1,0 +1,24 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"type": "object",
+	"properties": {
+		"log_level": {
+			"type": "string",
+			"enum": [
+				"ALL",
+				"MARK",
+				"TRACE",
+				"DEBUG",
+				"INFO",
+				"WARN",
+				"ERROR",
+				"FATAL",
+				"OFF"
+			]
+		}
+	},
+	"required": [
+		"log_level"
+	],
+	"additionalProperties": false
+}

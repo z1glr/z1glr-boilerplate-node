@@ -1,0 +1,175 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"type": "object",
+	"properties": {
+		"release_dir": {
+			"type": "string"
+		},
+		"builds": {
+			"description": "individual builds that should be executed",
+			"type": "object",
+			"additionalProperties": {
+				"type": "object",
+				"properties": {
+					"script": {
+						"description": "node-script that executes the build",
+						"type": "string"
+					},
+					"files": {
+						"description": "built-paths in the build-directory that need to be copied to the release-directory",
+						"type": "array",
+						"items": {
+							"type": "string"
+						}
+					},
+					"entry": {
+						"description": "optional. entry-point of the program, creates a shell-/bash-script for easy launching",
+						"type": "string"
+					}
+				},
+				"required": [
+					"script",
+					"files"
+				],
+				"additionalProperties": false
+			}
+		},
+		"license_report": {
+			"type": "object",
+			"properties": {
+				"config": {
+					"type": "object",
+					"additionalProperties": false,
+					"properties": {
+						"output": {
+							"type": "string"
+						},
+						"config": {
+							"type": "string"
+						},
+						"addFolder": {
+							"type": "array",
+							"items": {
+								"type": "string"
+							}
+						},
+						"defaultLicenseText": {
+							"type": "string"
+						},
+						"force": {
+							"type": "boolean"
+						},
+						"ignore": {
+							"type": "array",
+							"items": {
+								"type": "string"
+							}
+						},
+						"ignoreMissingUrl": {
+							"type": "boolean"
+						},
+						"overrides": {
+							"type": "array",
+							"items": {
+								"type": "object",
+								"properties": {
+									"name": {
+										"type": "string"
+									},
+									"url": {
+										"type": "string"
+									},
+									"licenseName": {
+										"type": "string"
+									},
+									"licenseText": {
+										"type": "string"
+									}
+								},
+								"additionalProperties": false
+							}
+						},
+						"root": {
+							"type": "string"
+						},
+						"search": {
+							"type": "string",
+							"enum": [
+								"recursive",
+								"flat"
+							]
+						}
+					}
+				},
+				"path": {
+					"description": "path in the release-directory for the module-licenses",
+					"type": "string"
+				},
+				"license": {
+					"type": "object",
+					"properties": {
+						"path": {
+							"description": "license-path",
+							"type": "string"
+						},
+						"destination": {
+							"description": "optional. path in the release-directory for the license-file",
+							"type": "string"
+						}
+					},
+					"required": [
+						"path"
+					],
+					"additionalProperties": false
+				}
+			},
+			"required": [
+				"config",
+				"path",
+				"license"
+			],
+			"additionalProperties": false
+		},
+		"external_packages": {
+			"description": "list of packages that need to be copied in the release-directory",
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		},
+		"package_json": {
+			"type": "string"
+		},
+		"configs": {
+			"type": "object",
+			"additionalProperties": {
+				"type": "object",
+				"properties": {
+					"schema": {
+						"description": "json-schema-file for building the default-config",
+						"type": "string"
+					},
+					"dest": {
+						"description": "path of the config-file in the release-directory",
+						"type": "string"
+					}
+				},
+				"required": [
+					"schema",
+					"dest"
+				],
+				"additionalProperties": false
+			}
+		},
+		"keep": {
+			"description": "optional. keep build-files",
+			"type": "boolean"
+		}
+	},
+	"required": [
+		"release_dir",
+		"builds",
+		"license_report"
+	],
+	"additionalProperties": false
+}

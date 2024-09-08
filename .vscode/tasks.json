@@ -1,0 +1,29 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "typescript",
+			"tsconfig": "src/tsconfig.json",
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build",
+			"label": "main: tsc-type-check"
+		},
+		{
+			"type": "npm",
+			"script": "dev",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "main: esbuild-sourcemap"
+		},
+		{
+			"label": "main: tsc-type-check and esbuild-sourcemap",
+			"dependsOrder": "sequence",
+			"dependsOn": [
+				"main: tsc-type-check",
+				"main: esbuild-sourcemap"
+			]
+		}
+	]
+}

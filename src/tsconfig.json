@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "NodeNext",
+		"outDir": "../out",
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"strict": true,
+		"skipLibCheck": true,
+		"noImplicitAny": true,
+		"noImplicitThis": true,
+		"noEmit": true,
+		"resolveJsonModule": true,
+		"strictNullChecks": true
+	}
+}

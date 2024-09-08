@@ -1,0 +1,7 @@
+node_modules
+logs
+dist
+out
+
+build/release.js
+build/3rdpartylicenses.json

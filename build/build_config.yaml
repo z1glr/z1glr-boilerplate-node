@@ -1,0 +1,18 @@
+builds:
+  main:
+    script: build
+    entry: main.js
+    files:
+      - main.js
+configs:
+  main:
+    schema: config.schema.json
+    dest: config.yaml
+release_dir: dist
+license_report:
+  config:
+    ignores:
+      - dist/*
+  path: licenses
+  license:
+    path: LICENSE

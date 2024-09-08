@@ -1,0 +1,45 @@
+{
+	"name": "z1glr-boilerplate",
+	"version": "1.0.0",
+	"main": "src/main.ts",
+	"scripts": {
+		"dev": "node build/main.js debug",
+		"build": "node build/main.js release",
+		"release": "run-s format-check release-build",
+		"release-build": "node build/build-release.js && node build/release.js",
+		"lint": "eslint .",
+		"format-check": "prettier --check src/",
+		"format-write": "prettier --write src/",
+		"prepare": "husky"
+	},
+	"author": "z1glr",
+	"license": "MIT",
+	"description": "",
+	"dependencies": {
+		"ajv": "^8.17.1",
+		"ajv-formats": "^3.0.1",
+		"log4js": "^6.9.1",
+		"yaml": "^2.5.0"
+	},
+	"devDependencies": {
+		"@eslint/eslintrc": "^3.1.0",
+		"@eslint/js": "^9.9.1",
+		"@types/archiver": "^6.0.2",
+		"@types/json-schema-faker": "^0.5.4",
+		"@types/tmp": "^0.2.6",
+		"@typescript-eslint/eslint-plugin": "^8.4.0",
+		"@typescript-eslint/parser": "^8.4.0",
+		"@weichwarenprojekt/license-reporter": "^1.0.0",
+		"archiver": "^7.0.1",
+		"esbuild": "^0.23.1",
+		"esbuild-node-tsc": "^2.0.5",
+		"eslint": "^9.9.1",
+		"eslint-config-prettier": "^9.1.0",
+		"husky": "^9.1.5",
+		"json-schema-faker": "^0.5.6",
+		"npm-run-all": "^4.1.5",
+		"prettier": "^3.3.3",
+		"tmp": "^0.2.3",
+		"typescript": "^5.5.4"
+	}
+}
