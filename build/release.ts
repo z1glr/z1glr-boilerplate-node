@@ -46,23 +46,57 @@ const build_dir = path.join(config.release_dir, "build");
 const release_dir_latest = path.join(config.release_dir, "latest");
 
 // helper-functions
+/**
+ * copy a file into the build-directory
+ * @param file path to the file
+ * @param dest destination relative to the build-directory
+ */
 function copy_build_file (file: string, dest?: string) {
 	fs.copyFileSync(file, path.join(build_dir, dest ?? path.basename(file)));
 }
+
+/**
+ * copy a directory into the build-directory
+ * @param dir path to the file
+ * @param dest destination relative to the build-directory
+ * @param args optional. arguments for fs.cpSync
+ */
 function copy_build_dir (dir: string, dest?: string, args?: fs.CopySyncOptions) {
 	fs.cpSync(dir, path.join(build_dir, dest ?? path.basename(dir)), { recursive: true, ...args });
 }
+
+/**
+ * copy a file into the release-directory
+ * @param file path to the file
+ * @param dest destination relative to the release-directory
+ */
 function copy_release_file (file: string, dest?: string) {
 	fs.copyFileSync(file, path.join(release_dir_latest, dest ?? path.basename(file)));
 }
+
+/**
+ * copy a directory into the release-directory
+ * @param dir path to the file
+ * @param dest destination relative to the release-directory
+ * @param args optional. arguments for fs.cpSync
+ */
 function copy_release_dir (dir: string, dest?: string, args?: fs.CopySyncOptions) {
 	fs.cpSync(dir, path.join(release_dir_latest, dest ?? path.basename(dir)), { recursive: true, ...args });
 }
+
+/**
+ * copy a node-module into the release-directory
+ * @param name name of the node_module
+ */
 function copy_module (name: string) {
 	console.log(`\t\t'${name}'`);
 	copy_release_dir(`node_modules/${name}`, `node_modules/${name}/`);
 };
 
+/**
+ * (try to) delete a directory and create it again
+ * @param pth path of the directory
+ */
 function recreate_directory(pth: string) {
 	console.log(`\t'${pth}'`);
 
@@ -73,6 +107,11 @@ function recreate_directory(pth: string) {
 	fs.mkdirSync(pth, { recursive: true });
 }
 
+/**
+ * create a bash / cmd launch-script for a node-program
+ * @param pth path of the programm in the build-directory
+ * @param name name for the created file
+ */
 function create_launch_script(pth: string, name: string) {
 	const destination = path.parse(pth).name;
 
