@@ -11,7 +11,7 @@ configs:
 release_dir: dist
 license_report:
   config:
-    ignores:
+    ignore:
       - dist/*
   path: licenses
   license:

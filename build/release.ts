@@ -180,6 +180,7 @@ Object.entries(config.builds).forEach(([name, build]) => {
 	console.log(`\t${name}`);
 	execSync(`npm run ${build.script}`);
 });
+console.log();
 
 // generate config-files from schemas
 if (config.configs !== undefined) {
