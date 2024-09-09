@@ -109,32 +109,33 @@ function recreate_directory(pth: string) {
 
 /**
  * create a bash / cmd launch-script for a node-program
- * @param pth path of the programm in the build-directory
+ * @param entry path of the programm in the build-directory
  * @param name name for the created file
  */
-function create_launch_script(pth: string, name: string) {
-	const destination = path.parse(pth).name;
+function create_launch_script(entry: string, name: string) {
+	const destination = path.parse(entry).name;
 
 	const relative_path_prefix = "../".repeat((destination.match(/\//g) ?? []).length);
 
+	let pth: string = "";
 	let content: string = "";
 
 	switch (process.platform) {
 		case "win32":
 			pth = destination + ".bat";
 
-			content = `@echo off\ncd /D "%~dp0"\n${relative_path_prefix.replaceAll("/", "\\")}${exec_name} ${pth}\npause\n`
+			content = `@echo off\ncd /D "%~dp0"\n${relative_path_prefix.replaceAll("/", "\\")}${exec_name} ${entry}\npause\n`
 
 			break;
 		case "linux":
 			pth = destination + ".sh";
 
-			content = `${relative_path_prefix}./${exec_name} ${pth}\nread -n1 -r -p "Press any key to continue..." key`;
+			content = `${relative_path_prefix}./${exec_name} ${entry}\nread -n1 -r -p "Press any key to continue..." key`;
 
 			break;
 	}
 
-	console.log(`\t${name}: '${pth}'`);
+	console.log(`\t${name}: '${entry}'`);
 
 	fs.writeFileSync(path.join(config.release_dir, "latest", pth), content,{ mode: "766" });
 }
