@@ -12,12 +12,14 @@ import formatsPlugin from "ajv-formats";
 /* eslint-disable @typescript-eslint/no-unused-vars */
 interface Config {
 	release_dir: string;
-	builds: Record<string, { script: string; files: string[]; entry?: string; }>;
+	builds: Record<string, { script: string; files: string[]; } & (Record<string, never> | { script_path?: string; entry: string; })>;
 	license_report: {
 		config: Partial<IReporterCliConfiguration> & Pick<IReporterCliConfiguration, "ignore">;
 		path: string;
 		license: { path: string; destination?: string; }
 	};
+	mkdir?: string[];
+	copy?: { orig: string; dest?: string }[];
 	external_packages?: string[];
 	package_json?: string;
 	configs?: Record<string, { schema: string; dest: string; }>;
@@ -28,9 +30,9 @@ const ajv = new Ajv();
 formatsPlugin(ajv);
 const validate_config = ajv.compile(JSON.parse(fs.readFileSync(path.join(__dirname, "build_config.schema.json"), "utf-8")) as JSONSchemaType<Config>);
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/naming-convention
-const _config_raw = yaml.parse(fs.readFileSync(path.join(__dirname, "build_config.yaml"), "utf-8"));
-if (!validate_config(_config_raw)) {
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+const config = yaml.parse(fs.readFileSync(path.join(__dirname, "build_config.yaml"), "utf-8"));
+if (!validate_config(config)) {
 	const errors = validate_config.errors?.map((error) => `${error.instancePath}: ${error.message}`)
 		.join(", ");
 
@@ -39,20 +41,32 @@ if (!validate_config(_config_raw)) {
 	process.exit(1);
 }
 
-const config = _config_raw;
-
 config.license_report.config.output ??= "build/3rdpartylicenses.json";
 const build_dir = path.join(config.release_dir, "build");
 const release_dir_latest = path.join(config.release_dir, "latest");
 
 // helper-functions
 /**
+ * ensure the parent-directories of the file exist
+ * @param pth path of the file
+ */
+function create_parent_dirs(pth: string) {
+	const parent_dir = path.parse(pth).dir;
+	if (!fs.existsSync(parent_dir)) {
+		fs.mkdirSync(parent_dir, { recursive: true });
+	}
+}
+/**
  * copy a file into the build-directory
  * @param file path to the file
  * @param dest destination relative to the build-directory
  */
 function copy_build_file (file: string, dest?: string) {
-	fs.copyFileSync(file, path.join(build_dir, dest ?? path.basename(file)));
+	dest = path.join(build_dir, dest ?? file);
+
+	create_parent_dirs(dest);
+
+	fs.copyFileSync(file, dest);
 }
 
 /**
@@ -62,7 +76,11 @@ function copy_build_file (file: string, dest?: string) {
  * @param args optional. arguments for fs.cpSync
  */
 function copy_build_dir (dir: string, dest?: string, args?: fs.CopySyncOptions) {
-	fs.cpSync(dir, path.join(build_dir, dest ?? path.basename(dir)), { recursive: true, ...args });
+	dest = path.join(build_dir, dest ?? dir);
+
+	create_parent_dirs(dest);
+
+	fs.cpSync(dir, dest, { recursive: true, ...args });
 }
 
 /**
@@ -71,7 +89,11 @@ function copy_build_dir (dir: string, dest?: string, args?: fs.CopySyncOptions) 
  * @param dest destination relative to the release-directory
  */
 function copy_release_file (file: string, dest?: string) {
-	fs.copyFileSync(file, path.join(release_dir_latest, dest ?? path.basename(file)));
+	dest = path.join(release_dir_latest, dest ?? file);
+
+	create_parent_dirs(dest);
+
+	fs.copyFileSync(file, dest);
 }
 
 /**
@@ -81,7 +103,11 @@ function copy_release_file (file: string, dest?: string) {
  * @param args optional. arguments for fs.cpSync
  */
 function copy_release_dir (dir: string, dest?: string, args?: fs.CopySyncOptions) {
-	fs.cpSync(dir, path.join(release_dir_latest, dest ?? path.basename(dir)), { recursive: true, ...args });
+	dest = path.join(release_dir_latest, dest ?? dir);
+
+	create_parent_dirs(dest);
+
+	fs.cpSync(dir, dest, { recursive: true, ...args });
 }
 
 /**
@@ -109,35 +135,57 @@ function recreate_directory(pth: string) {
 
 /**
  * create a bash / cmd launch-script for a node-program
- * @param entry path of the programm in the build-directory
+ * @param pth_js path of the programm in the build-directory
  * @param name name for the created file
+ * @param pth_script optional. path of the script
  */
-function create_launch_script(entry: string, name: string) {
-	const destination = path.parse(entry).name;
+function create_launch_script(pth_js: string, name: string, pth_script?: string) {
+	const path_parse_pth_js = path.parse(pth_js);
+	pth_script ??= path.join(path_parse_pth_js.dir, path_parse_pth_js.name);
 
-	const relative_path_prefix = "../".repeat((destination.match(/\//g) ?? []).length);
+	if (pth_script !== undefined) {
+		// create the path from the script to the js-file
+		const script_pth_elements = pth_script.split(/\//);
+		const js_pth_elements = pth_js.split(/\//);
 
-	let pth: string = "";
+		while (script_pth_elements[0] === js_pth_elements[0]) {
+			script_pth_elements.shift();
+			js_pth_elements.shift();
+		}
+
+		pth_js = "../".repeat(script_pth_elements.length - 1) + js_pth_elements.join("/");
+	} else {
+		pth_js = path.basename(pth_js);
+	}
+
+	let extension: string = "";
 	let content: string = "";
+	const relative_path_prefix = "../".repeat((pth_script.match(/\//g) ?? []).length);
 
 	switch (process.platform) {
 		case "win32":
-			pth = destination + ".bat";
+			extension = ".bat";
 
-			content = `@echo off\ncd /D "%~dp0"\n${relative_path_prefix.replaceAll("/", "\\")}${exec_name} ${entry}\npause\n`
+			content = `@echo off\ncd /D "%~dp0"\n${relative_path_prefix.replaceAll("/", "\\")}${exec_name} ${pth_js}\npause\n`
 
 			break;
 		case "linux":
-			pth = destination + ".sh";
+			extension = ".sh";
 
-			content = `${relative_path_prefix}./${exec_name} ${entry}\nread -n1 -r -p "Press any key to continue..." key`;
+			content = `${relative_path_prefix}	./${exec_name} ${pth_js}\nread -n1 -r -p "Press any key to continue..." key`;
 
 			break;
 	}
 
-	console.log(`\t${name}: '${entry}'`);
+	pth_script += extension
 
-	fs.writeFileSync(path.join(config.release_dir, "latest", pth), content,{ mode: "766" });
+	console.log(`\t${name}: '${pth_script}' for '${pth_js}'`);
+
+	pth_script = path.join(release_dir_latest, pth_script);
+
+	create_parent_dirs(pth_script);
+
+	fs.writeFileSync(pth_script, content,{ mode: "766" });
 }
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
@@ -207,7 +255,11 @@ if (config.configs !== undefined) {
 			
 			const sample_config = jsf.generate(JSON.parse(fs.readFileSync(conf.schema, "utf-8")) as Schema) as object;
 			
-			fs.writeFileSync(path.join(release_dir_latest, conf.dest), file_format_library.stringify(sample_config));
+			const dest = path.join(release_dir_latest, conf.dest);
+
+			create_parent_dirs(dest);
+
+			fs.writeFileSync(dest, file_format_library.stringify(sample_config));
 	
 		}
 	});
@@ -223,7 +275,7 @@ if (startup_script_builds.length > 0) {
 	console.log(`Creating startup-scripts`);
 
 	startup_script_builds.forEach(([name, build]) => {
-		create_launch_script(build.entry, name);
+		create_launch_script(build.entry, name, build.script_path);
 	});
 	console.log();
 }
@@ -255,7 +307,7 @@ licenses_orig.forEach((pack) => {
 });
 
 console.log("\tCreating licence-directory");
-fs.mkdirSync(path.join(release_dir_latest, config.license_report.path));
+fs.mkdirSync(path.join(release_dir_latest, config.license_report.path), { recursive: true });
 
 console.log("\tWriting licences");
 Object.keys(package_json.dependencies).forEach((pack) => {
@@ -290,12 +342,6 @@ Object.entries(config.builds).forEach(([name, build]) => {
 		
 		console.log(`\t${name}: '${file_path}'`);
 
-		// create the parent directories
-		const parent_dir = path.parse(file_path).dir;
-		if (!fs.existsSync(parent_dir)) {
-			fs.mkdirSync(path.parse(file_path).dir, { recursive: true });
-		}
-
 		if (fs.statSync(file_path).isFile()) {
 			copy_release_file(file_path, file);
 		} else {
@@ -304,10 +350,47 @@ Object.entries(config.builds).forEach(([name, build]) => {
 	});
 });
 
+// copy external packages
 if (config.external_packages !== undefined) {
-	console.log("\tCopying external node-modules");
+	console.log("\texternal node-modules");
 	
 	config.external_packages.forEach((module) => copy_module(module));
+}
+
+// copy additional directories
+config.copy?.forEach(({ orig, dest }) => {
+	if (dest !== undefined) {
+		const dest_parent = path.parse(path.join(release_dir_latest, dest)).dir;
+
+		// if the destinations-parent doesn't exist, create it
+		if (!fs.existsSync(dest_parent)) {
+			fs.mkdirSync(dest_parent, { recursive: true });
+		}
+
+		console.log(`\t'${orig}' -> '${dest}'`);
+	} else {
+		console.log(`\t'${orig}'`)
+	}
+
+	// handle files and directories different
+	if (fs.statSync(orig).isDirectory()) {
+		copy_release_dir(orig, dest ?? orig);
+	} else {
+		copy_release_file(orig, dest ?? orig);
+	}
+});
+
+console.log();
+
+if (config.mkdir) {
+	console.log("Creating empty directories");
+
+	config.mkdir.forEach(dir => {
+		console.log(`\t'${dir}'`);
+
+		fs.mkdirSync(path.join(release_dir_latest, dir), { recursive: true });
+	});
+
 	console.log();
 }
 

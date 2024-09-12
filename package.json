@@ -5,7 +5,7 @@
 	"scripts": {
 		"dev": "node build/main.js debug",
 		"build": "node build/main.js release",
-		"release": "run-s format-check release-build",
+		"release": "run-s lint format-check release-build",
 		"release-build": "node build/build-release.js && node build/release.js",
 		"lint": "eslint .",
 		"format-check": "prettier --check src/",

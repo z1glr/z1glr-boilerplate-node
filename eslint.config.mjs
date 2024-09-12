@@ -79,6 +79,7 @@ jsdoc.configs['flat/recommended-typescript'],
 		"eslint.config.mjs",
 		"dist/*",
 		"out/*",
-		"build/*.js"
+		"build/*.js",
+		"src/version.ts"
 	]
 }];

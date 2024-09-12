@@ -25,6 +25,10 @@
 					"entry": {
 						"description": "optional. entry-point of the program, creates a shell-/bash-script for easy launching",
 						"type": "string"
+					},
+					"script_path": {
+						"description": "optional, requires 'entry'. name for the shell-/bash-script",
+						"type": "string"
 					}
 				},
 				"required": [
@@ -129,6 +133,29 @@
 				"license"
 			],
 			"additionalProperties": false
+		},
+		"mkdir": {
+			"description": "create empty directories in the release-directory",
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		},
+		"copy": {
+			"description": "copy files and directories to the release-directory",
+			"type": "array",
+			"items": {
+				"type": "object",
+				"properties": {
+					"orig": {
+						"type": "string"
+					},
+					"dest": {
+						"type": "string"
+					}
+				},
+				"additionalProperties": false
+			}
 		},
 		"external_packages": {
 			"description": "list of packages that need to be copied in the release-directory",
